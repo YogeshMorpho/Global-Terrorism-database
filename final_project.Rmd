@@ -1,128 +1,73 @@
+##General Introduction
+##Global Terrorism Dataset
+It is a generalized summary of the disastrous events that have occured in a certain period of time and which have effected nations in a traumatizing way, where in people have lost lives or parts of their body or home.
+And this also has given the description about the way the attacks have taken place and the groups responsible for it.
 
+This Dataset has the detailed information about the terrorist attacks that haven taken place since the year 1970 to the year 2017.
+And the elaborated context about the event that has taken in a particular place or region or city or country at a particular time.
 
-```{r}
-library(dplyr)
-df=read.csv("C:/Users/harish/Downloads/globalterrorismdb_0718dist/globalterrorismdb_0718dist.csv")
-df=select(df,-summary,-alternative,-approxdate,-resolution,-targsubtype1,-targsubtype1_txt,-corp1,-target1,-gsubname,-property,-propcomment,-divert)
-df=select(df,-attacktype2,-attacktype2_txt)
-df=select(df,-c(targtype2,targtype2_txt,corp2,target2,natlty2,natlty2_txt,targtype3,targtype3_txt,targsubtype3,targsubtype3_txt))
-df=select(df,-c(targsubtype2,targsubtype2_txt,corp3,target3,gname2,gsubname2,gname3,gsubname3))
-df=select(df,-c(guncertain1,guncertain2,guncertain3,nperps,nperpcap,claimmode2,claimmode2_txt,claim3,claimmode3))
-df=select(df,-c(weaptype2,weaptype2_txt,weapsubtype2))
-df=select(df,-c(weapsubtype2_txt,weaptype3,weaptype3_txt,weapsubtype3,weapsubtype3_txt,weaptype4,weapsubtype4,weapsubtype4_txt))
-df=select(df,-c(nkillus,nwoundus,propextent,propextent_txt,propvalue,nhostkidus,ransomamtus,ransompaidus,ransomnote,addnotes))
-df=select(df,-c(scite1,scite2,scite3,dbsource,related,claimmode3_txt))
+This consists of 45 columns and 181,691 rows of information ,which are categorised into certain basic types , which are the type of attack, the place of attack, type of weapon used, number of people killed, duration of an attack , etc.
 
-df[df==""] <- NA
+This dataset has a considerable number of NA values in categorical as wellas nummerical columns , which have been replaced by the correspoding average or previous values , according to their data types.
 
-df=select(df, -c(location,alternative_txt,attacktype3,attacktype3_txt,natlty3,natlty3_txt,claimmode,claimmode_txt,claim2,compclaim))
-df=select(df, -c(weaptype4_txt,nhostkid,nwoundte,nhours,ndays,kidhijcountry,ransom,ransomamt,ransompaid,hostkidoutcome,hostkidoutcome_txt))
-df=select(df, -c(nreleased,motive,provstate,claimed))
-
-View(df)
-write.csv(df,"C:/Users/harish/Downloads/terror_updated.csv")
-
-```
-
-
-```{r}
-print(colSums(is.na(df)))
-print(nrow(df))
-```
-
-```{r}
-avg_region = aggregate(df[, 12:13], list(df$region), mean , na.rm = TRUE)
-df$latitude[is.na(df$latitude)] = avg_region[df$region[which(is.na(df$latitude))],2]
-df$longitude[is.na(df$longitude)] = avg_region[df$region[which(is.na(df$longitude))],3]
-print(sum(is.na(df$latitude)))
-print(sum(is.na(df$longitude)))
-```
-```{r}
-close = function(lat,long){
-  cl = which.min(abs(df$latitude[!is.na(df$city)]-lat)+abs(df$longitude[!is.na(df$city)]-long))
-  return(cl)
-}
-df$city[is.na(df$city)] = df$city[mapply(close,lat = df$latitude[is.na(df$city)], long =      df$longitude[is.na(df$city)])]
-print(sum(is.na(df$city)))
-#print(df$latitude[is.na(df$city)])
-#print(length(df$latitude[is.na(df$city)]))
-#print(length(df$longitude[is.na(df$city)]))
-```
-```{r}
-avg_attype = aggregate(df[, 35:37], list(df$attacktype1), mean , na.rm = TRUE)
-df$nkill[is.na(df$nkill)] = avg_attype[df$attacktype1[which(is.na(df$nkill))],2]
-df$nkillter[is.na(df$nkillter)] = avg_attype[df$attacktype1[which(is.na(df$nkillter))],2]
-df$nwound[is.na(df$nwound)] = avg_attype[df$attacktype1[which(is.na(df$nwound))],2]
-print(sum(is.na(df$nkill)))
-print(sum(is.na(df$nkillter)))
-print(sum(is.na(df$nwound)))
-```
-```{r}
-me = mean(df$ishostkid, na.rm = TRUE)
-df$ishostkid[is.na(df$ishostkid) & (df$attacktype1[is.na(df$ishostkid)] != 6)] = 0
-df$ishostkid[is.na(df$ishostkid) & (df$attacktype1[is.na(df$ishostkid)] == 6)] = me
-
-print(sum(is.na(df$ishostkid)))
-
-```
-```{r}
-natgang = function(gname){
-  idx = which(df$gname[!is.na(df$natlty1)] == gname)[1]
-  return(idx)
-}
-natgang2 = function(gname){
-  idx = which(df$gname[!is.na(df$natlty1_txt)] == gname)[1]
-  return(idx)
-}
-df$natlty1[is.na(df$natlty1)] = df$natlty1[sapply(df$gname[is.na(df$natlty1)], natgang)]
-df$natlty1_txt[is.na(df$natlty1_txt)] = df$natlty1_txt[sapply(df$gname[is.na(df$natlty1_txt)], natgang2)]
-
-print(sum(is.na(df$natlty1)))
-print(sum(is.na(df$natlty1_txt)))
-
-```
-```{r}
-df$weapsubtype1[is.na(df$weapsubtype1)] = 32
-df$weapsubtype1_txt = as.character(df$weapsubtype1_txt)
-df$weapsubtype1_txt[is.na(df$weapsubtype1_txt)] = 'Unknown'
-df$weapsubtype1_txt = as.factor(df$weapsubtype1_txt)
-
-print(sum(is.na(df$weapsubtype1)))
-print(sum(is.na(df$weapsubtype1_txt)))
-```
-```{r}
-library(tidyr)
-df$iday[df$iday == 0] = 1
-df$imonth[df$imonth == 0] = 1
-df[4] = unite(df[,2:4],'',iyear,imonth,iday,sep = '-')
-df$date = as.Date(df$iday,format = '%Y-%m-%d')
-df = select(df,-c(imonth,iday))
-```
-
-
-```{r}
-print(colSums(is.na(df)))
-```
-
-
-```{r}
-print(sapply(df,class))
-```
-
+##Decription of columns
+1.Date - This denotes the occurence of the event, which is the terrorist attack date.
+2.Extended - This is the number of days it has extended to.
+3.Region - This denotes the continent of the occurence of terrorist attack.
+4.Country - This denotes the country.
+5.City - This is the name of the city.
+6.Latitude and Longitude - The exact pinpoint location of the event occured.
+7.Crit1,Crit2 and Crit3 - The stages of critical levels of the terrorist attack occured.
+8.Doubleterr and Multiple - The number of times the types of event have occured in that duration of attack time.
+9.Success - The number of times the terrorist have had the upper hand in successfully bombing the place.
+10.Attack type - The various formats of attack that have taken place for killing people till now.
+11.Target type and Nationality - The category of people who have been effected the most in each attack and the nationality they belong to
+12.Gang and Indiviual - The name of the gang(group of indviuals) or the indiviaul person responsible for the attack to take place in that region and the people getting affected in that region.
+13.Motive - The reason for the events to occur in a particular place and to a certain people are motives.
+14.Weapon Type - Describes the type of weaponary used for causing the attack and the sub-category among them, with ammunition.
+15.nkill - The number of people who died due to the attack.
+16.nkillter - The number of terrorist executed , after or during the attack.
+17.nwound - The number of people wounded due to the attack, but not killed.
+18.ishostkid - The situation where the person is taken hostage , after being kidnapped by the terrorists.
 
 ```{r}
 library(dplyr)
+readdata=read.csv("E:/Rproject/globalterrorismdb_0718dist.csv")
+readdata=select(readdata,-summary,-alternative,-approxdate,-resolution,-targsubtype1,-targsubtype1_txt,-corp1,-target1,-gsubname,-property,-propcomment,-divert)
+readdata=select(readdata,-attacktype2,-attacktype2_txt)
+readdata=select(readdata,-c(targtype2,targtype2_txt,corp2,target2,natlty2,natlty2_txt,targtype3,targtype3_txt,targsubtype3,targsubtype3_txt))
+readdata=select(readdata,-c(targsubtype2,targsubtype2_txt,corp3,target3,gname2,gsubname2,gname3,gsubname3))
+readdata=select(readdata,-c(guncertain1,guncertain2,guncertain3,nperps,nperpcap,claimmode2,claimmode2_txt,claim3,claimmode3))
+readdata=select(readdata,-c(weaptype2,weaptype2_txt,weapsubtype2))
+readdata=select(readdata,-c(weapsubtype2_txt,weaptype3,weaptype3_txt,weapsubtype3,weapsubtype3_txt,weaptype4,weapsubtype4,weapsubtype4_txt))
+readdata=select(readdata,-c(nkillus,nwoundus,propextent,propextent_txt,propvalue,nhostkidus,ransomamtus,ransompaidus,ransomnote,addnotes))
+readdata=select(readdata,-c(scite1,scite2,scite3,dbsource,related,claimmode3_txt))
 
-regions = df$region
+readdata[readdata==""] <- NA
+
+readdata=select(readdata, -c(location,alternative_txt,attacktype3,attacktype3_txt,natlty3,natlty3_txt,claimmode,claimmode_txt,claim2,compclaim))
+readdata=select(readdata, -c(weaptype4_txt,nhostkid,nwoundte,nhours,ndays,kidhijcountry,ransom,ransomamt,ransompaid,hostkidoutcome,hostkidoutcome_txt))
+readdata=select(readdata, -c(nreleased))
+
+View(readdata)
+write.csv(readdata,"E:/Rproject/terror_updated.csv")
+
 ```
 
 
+```{r}
 
+pie("nkill",c("iyear"),main="Pie chart for Killings")
+```
+##Killings Worldwide
+
+
+Let's start by looking to the killings in terror activities. In the following treemap, the size of the areas corresponding to each year is proportional with the number of kills in that year in the terrorist activities. We can easily see that there was a massive increase in killings in terrorist activities in the years from 2012 and in the last 3 years (2014-2016) the volume was significantly higher than in the previous years.
 
 
 ```{r}
 library('treemap')
-treemap(df, 
+treemap(readdata, 
         index=c("iyear"), 
         vSize = "nkill",  
         palette = "Reds",  
@@ -130,11 +75,13 @@ treemap(df,
         fontsize.title = 14 
 )
 ```
+## Killings by country
 
+If we look now to the country split, we see that there are few countries where the number of killed people in terrorist attacks is very large. Some of them have experienced recent massive increase, like Iraq and Syria and Afganistan while others have a long history, like Peru, Colombia, India, Pakistan. 
 
 
 ```{r}
-treemap(df, 
+treemap(readdata, 
         index=c("country_txt"), 
         vSize = "nkill",  
         palette = "Reds",  
@@ -142,36 +89,42 @@ treemap(df,
         fontsize.title = 14 
 ) 
 ```
+##Type of Attack
+
 
 ```{r}
 library(tidyverse)
-df %>% group_by(iyear,attacktype1_txt) %>% summarise(n = length(iyear)) %>% ungroup() -> dfya
+readdata %>% group_by(iyear,attacktype1_txt) %>% summarise(n = length(iyear)) %>% ungroup() -> dfya
 colnames(dfya)<-c("Year","Type of attack","Number of events")
 ggplot(data = dfya, aes(x = Year, y = `Number of events`, colour = `Type of attack`)) + 
   geom_line() + geom_point() + theme_bw()
 ```
 
 ```{r}
-df %>% group_by(iyear,targtype1_txt) %>% summarise(n=length(iyear)) %>% ungroup() -> dfya2
+readdata %>% group_by(iyear,targtype1_txt) %>% summarise(n=length(iyear)) %>% ungroup() -> dfya2
 colnames(dfya2)<-c("Year","Target type","Number of events")
 ggplot(data = dfya2, aes(x = Year, y = `Number of events`, colour = `Target type`)) + 
   geom_line() +geom_point() +theme_bw()
 ```
 
 ```{r}
-dfa <-sort(table(df$gname),decreasing = TRUE)[1:10]
+dfa <-sort(table(readdata$gname),decreasing = TRUE)[1:10]
 
 dfa<-as.data.frame(dfa)
 dfa<-dfa[-1,]
 
 ggplot(data = dfa, aes(x = reorder(Var1,Freq), y = Freq)) +  
   geom_bar(stat="identity", fill="tomato", colour="black") +
-  coord_flip() + theme_bw(base_size = 10)  +
+```
+
+
+```{r}
+coord_flip() + theme_bw(base_size = 10)  +
   labs(title="", x ="Terrorist group name", y = "Number of events")
 ```
 
 ```{r}
-df %>% filter(suicide ==1) -> data_s
+readdata %>% filter(suicide ==1) -> data_s
 library('leaflet')
 leaflet(data = data_s) %>%
   addTiles() %>%
@@ -186,7 +139,7 @@ leaflet(data = data_s) %>%
 ```
 
 ```{r}
-df %>% group_by(gname) %>% summarise(nkills = sum(nkill)) %>% top_n(n=10) %>% ungroup() -> gname_kills
+readdata %>% group_by(gname) %>% summarise(nkills = sum(nkill)) %>% top_n(n=10) %>% ungroup() -> gname_kills
 ggplot(data = gname_kills, aes(x = reorder(gname,nkills), y = nkills)) +  
   geom_bar(stat="identity", fill="tomato", colour="black") +
   coord_flip() + theme_bw(base_size = 8)  +
@@ -195,8 +148,8 @@ ggplot(data = gname_kills, aes(x = reorder(gname,nkills), y = nkills)) +
 
 
 ```{r}
-df<-df[!is.na(df$natlty1_txt),]
-df %>% group_by(natlty1_txt) %>% summarise(nevents = length(natlty1_txt)) %>% top_n(n=20) %>% ungroup() -> perp_home
+readdata<-readdata[!is.na(readdata$natlty1_txt),]
+readdata %>% group_by(natlty1_txt) %>% summarise(nevents = length(natlty1_txt)) %>% top_n(n=20) %>% ungroup() -> perp_home
 ggplot(data = perp_home, aes(x = reorder(natlty1_txt,nevents), y = nevents)) +  
   geom_bar(stat="identity", fill="blue", colour="black") +
   coord_flip() + theme_bw(base_size = 8)  +
@@ -206,7 +159,7 @@ ggplot(data = perp_home, aes(x = reorder(natlty1_txt,nevents), y = nevents)) +
 
 
 ```{r}
-ggplot(df, aes(x = iyear))+ labs(title =" Terrorist attacks globally between 1970-2015 by attack type", x = "Years", y = "Number of Attacks", size = 12) + 
+ggplot(readdata, aes(x = iyear))+ labs(title =" Terrorist attacks globally between 1970-2015 by attack type", x = "Years", y = "Number of Attacks", size = 12) + 
   geom_bar(colour = "grey19", fill = "tomato3") + facet_wrap(~attacktype1_txt,scales = "free", ncol = 3) + 
   theme(axis.text.x = element_text(hjust = 1, size = 12)) + theme(strip.text = element_text(size = 16, face = "bold"))
 ```
