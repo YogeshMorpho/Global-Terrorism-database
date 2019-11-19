@@ -94,9 +94,9 @@ print(sum(is.na(df$weapsubtype1_txt)))
 library(tidyr)
 df$iday[df$iday == 0] = 1
 df$imonth[df$imonth == 0] = 1
-df[2:4] = unite(df[,2:4],'',iyear,imonth,iday,sep = '-')
-df$iyear = as.Date(df$iyear,format = '%Y-%m-%d')
-df = select(df,-c(iday,imonth))
+df[4] = unite(df[,2:4],'',iyear,imonth,iday,sep = '-')
+df$date = as.Date(df$iday,format = '%Y-%m-%d')
+df = select(df,-c(imonth,iday))
 ```
 
 
@@ -111,7 +111,9 @@ print(sapply(df,class))
 
 
 ```{r}
+library(dplyr)
 
+regions = df$region
 ```
 
 
