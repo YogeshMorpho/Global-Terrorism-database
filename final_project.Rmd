@@ -1,0 +1,211 @@
+
+
+```{r}
+library(dplyr)
+df=read.csv("C:/Users/harish/Downloads/globalterrorismdb_0718dist/globalterrorismdb_0718dist.csv")
+df=select(df,-summary,-alternative,-approxdate,-resolution,-targsubtype1,-targsubtype1_txt,-corp1,-target1,-gsubname,-property,-propcomment,-divert)
+df=select(df,-attacktype2,-attacktype2_txt)
+df=select(df,-c(targtype2,targtype2_txt,corp2,target2,natlty2,natlty2_txt,targtype3,targtype3_txt,targsubtype3,targsubtype3_txt))
+df=select(df,-c(targsubtype2,targsubtype2_txt,corp3,target3,gname2,gsubname2,gname3,gsubname3))
+df=select(df,-c(guncertain1,guncertain2,guncertain3,nperps,nperpcap,claimmode2,claimmode2_txt,claim3,claimmode3))
+df=select(df,-c(weaptype2,weaptype2_txt,weapsubtype2))
+df=select(df,-c(weapsubtype2_txt,weaptype3,weaptype3_txt,weapsubtype3,weapsubtype3_txt,weaptype4,weapsubtype4,weapsubtype4_txt))
+df=select(df,-c(nkillus,nwoundus,propextent,propextent_txt,propvalue,nhostkidus,ransomamtus,ransompaidus,ransomnote,addnotes))
+df=select(df,-c(scite1,scite2,scite3,dbsource,related,claimmode3_txt))
+
+df[df==""] <- NA
+
+df=select(df, -c(location,alternative_txt,attacktype3,attacktype3_txt,natlty3,natlty3_txt,claimmode,claimmode_txt,claim2,compclaim))
+df=select(df, -c(weaptype4_txt,nhostkid,nwoundte,nhours,ndays,kidhijcountry,ransom,ransomamt,ransompaid,hostkidoutcome,hostkidoutcome_txt))
+df=select(df, -c(nreleased,motive,provstate,claimed))
+
+View(df)
+write.csv(df,"C:/Users/harish/Downloads/terror_updated.csv")
+
+```
+
+
+```{r}
+print(colSums(is.na(df)))
+print(nrow(df))
+```
+
+```{r}
+avg_region = aggregate(df[, 12:13], list(df$region), mean , na.rm = TRUE)
+df$latitude[is.na(df$latitude)] = avg_region[df$region[which(is.na(df$latitude))],2]
+df$longitude[is.na(df$longitude)] = avg_region[df$region[which(is.na(df$longitude))],3]
+print(sum(is.na(df$latitude)))
+print(sum(is.na(df$longitude)))
+```
+```{r}
+close = function(lat,long){
+  cl = which.min(abs(df$latitude[!is.na(df$city)]-lat)+abs(df$longitude[!is.na(df$city)]-long))
+  return(cl)
+}
+df$city[is.na(df$city)] = df$city[mapply(close,lat = df$latitude[is.na(df$city)], long =      df$longitude[is.na(df$city)])]
+print(sum(is.na(df$city)))
+#print(df$latitude[is.na(df$city)])
+#print(length(df$latitude[is.na(df$city)]))
+#print(length(df$longitude[is.na(df$city)]))
+```
+```{r}
+avg_attype = aggregate(df[, 35:37], list(df$attacktype1), mean , na.rm = TRUE)
+df$nkill[is.na(df$nkill)] = avg_attype[df$attacktype1[which(is.na(df$nkill))],2]
+df$nkillter[is.na(df$nkillter)] = avg_attype[df$attacktype1[which(is.na(df$nkillter))],2]
+df$nwound[is.na(df$nwound)] = avg_attype[df$attacktype1[which(is.na(df$nwound))],2]
+print(sum(is.na(df$nkill)))
+print(sum(is.na(df$nkillter)))
+print(sum(is.na(df$nwound)))
+```
+```{r}
+me = mean(df$ishostkid, na.rm = TRUE)
+df$ishostkid[is.na(df$ishostkid) & (df$attacktype1[is.na(df$ishostkid)] != 6)] = 0
+df$ishostkid[is.na(df$ishostkid) & (df$attacktype1[is.na(df$ishostkid)] == 6)] = me
+
+print(sum(is.na(df$ishostkid)))
+
+```
+```{r}
+natgang = function(gname){
+  idx = which(df$gname[!is.na(df$natlty1)] == gname)[1]
+  return(idx)
+}
+natgang2 = function(gname){
+  idx = which(df$gname[!is.na(df$natlty1_txt)] == gname)[1]
+  return(idx)
+}
+df$natlty1[is.na(df$natlty1)] = df$natlty1[sapply(df$gname[is.na(df$natlty1)], natgang)]
+df$natlty1_txt[is.na(df$natlty1_txt)] = df$natlty1_txt[sapply(df$gname[is.na(df$natlty1_txt)], natgang2)]
+
+print(sum(is.na(df$natlty1)))
+print(sum(is.na(df$natlty1_txt)))
+
+```
+```{r}
+df$weapsubtype1[is.na(df$weapsubtype1)] = 32
+df$weapsubtype1_txt = as.character(df$weapsubtype1_txt)
+df$weapsubtype1_txt[is.na(df$weapsubtype1_txt)] = 'Unknown'
+df$weapsubtype1_txt = as.factor(df$weapsubtype1_txt)
+
+print(sum(is.na(df$weapsubtype1)))
+print(sum(is.na(df$weapsubtype1_txt)))
+```
+```{r}
+library(tidyr)
+df$iday[df$iday == 0] = 1
+df$imonth[df$imonth == 0] = 1
+df[2:4] = unite(df[,2:4],'',iyear,imonth,iday,sep = '-')
+df$iyear = as.Date(df$iyear,format = '%Y-%m-%d')
+df = select(df,-c(iday,imonth))
+```
+
+
+```{r}
+print(colSums(is.na(df)))
+```
+
+
+```{r}
+print(sapply(df,class))
+```
+
+
+```{r}
+
+```
+
+
+
+
+
+```{r}
+library('treemap')
+treemap(df, 
+        index=c("iyear"), 
+        vSize = "nkill",  
+        palette = "Reds",  
+        title="Killings in Global Terrorism", 
+        fontsize.title = 14 
+)
+```
+
+
+
+```{r}
+treemap(df, 
+        index=c("country_txt"), 
+        vSize = "nkill",  
+        palette = "Reds",  
+        title="Killings in Global Terrorism", 
+        fontsize.title = 14 
+) 
+```
+
+```{r}
+library(tidyverse)
+df %>% group_by(iyear,attacktype1_txt) %>% summarise(n = length(iyear)) %>% ungroup() -> dfya
+colnames(dfya)<-c("Year","Type of attack","Number of events")
+ggplot(data = dfya, aes(x = Year, y = `Number of events`, colour = `Type of attack`)) + 
+  geom_line() + geom_point() + theme_bw()
+```
+
+```{r}
+df %>% group_by(iyear,targtype1_txt) %>% summarise(n=length(iyear)) %>% ungroup() -> dfya2
+colnames(dfya2)<-c("Year","Target type","Number of events")
+ggplot(data = dfya2, aes(x = Year, y = `Number of events`, colour = `Target type`)) + 
+  geom_line() +geom_point() +theme_bw()
+```
+
+```{r}
+dfa <-sort(table(df$gname),decreasing = TRUE)[1:10]
+
+dfa<-as.data.frame(dfa)
+dfa<-dfa[-1,]
+
+ggplot(data = dfa, aes(x = reorder(Var1,Freq), y = Freq)) +  
+  geom_bar(stat="identity", fill="tomato", colour="black") +
+  coord_flip() + theme_bw(base_size = 10)  +
+  labs(title="", x ="Terrorist group name", y = "Number of events")
+```
+
+```{r}
+df %>% filter(suicide ==1) -> data_s
+library('leaflet')
+leaflet(data = data_s) %>%
+  addTiles() %>%
+  addMarkers(lat=data_s$latitude, lng=data_s$longitude, clusterOptions = markerClusterOptions(),
+             popup= paste("<strong>Date: </strong>", data_s$iday,"/",data_s$imonth,"/", data_s$iyear,
+                          "<br><br><strong>Place: </strong>", data_s$city,"-",data_s$country_txt,
+                          "<br><strong>Killed: </strong>", data_s$nkill,
+                          "<br><strong>Wounded: </strong>", data_s$nwound,
+                          "<br><strong>Killed US citizens: </strong>", data_s$nkillus,
+                          "<br><strong>Wounded US citizens: </strong>", data_s$nwoundus
+             ))  
+```
+
+```{r}
+df %>% group_by(gname) %>% summarise(nkills = sum(nkill)) %>% top_n(n=10) %>% ungroup() -> gname_kills
+ggplot(data = gname_kills, aes(x = reorder(gname,nkills), y = nkills)) +  
+  geom_bar(stat="identity", fill="tomato", colour="black") +
+  coord_flip() + theme_bw(base_size = 8)  +
+  labs(title="", x ="Group", y = "Killed")
+```
+
+
+```{r}
+df<-df[!is.na(df$natlty1_txt),]
+df %>% group_by(natlty1_txt) %>% summarise(nevents = length(natlty1_txt)) %>% top_n(n=20) %>% ungroup() -> perp_home
+ggplot(data = perp_home, aes(x = reorder(natlty1_txt,nevents), y = nevents)) +  
+  geom_bar(stat="identity", fill="blue", colour="black") +
+  coord_flip() + theme_bw(base_size = 8)  +
+  labs(title="", x ="Perpetrators nationality", y = "Terrorist attacks")
+```
+
+
+
+```{r}
+ggplot(df, aes(x = iyear))+ labs(title =" Terrorist attacks globally between 1970-2015 by attack type", x = "Years", y = "Number of Attacks", size = 12) + 
+  geom_bar(colour = "grey19", fill = "tomato3") + facet_wrap(~attacktype1_txt,scales = "free", ncol = 3) + 
+  theme(axis.text.x = element_text(hjust = 1, size = 12)) + theme(strip.text = element_text(size = 16, face = "bold"))
+```
+
