@@ -27,3 +27,7 @@ Acknowledgements
 The Global Terrorism Database is funded through START, by the US Department of State (Contract Number: SAQMMA12M1292) and the US Department of Homeland Security Science and Technology Directorate’s Office of University Programs (Award Number 2012-ST-061-CS0001, CSTAB 3.1). The coding decisions and classifications contained in the database are determined independently by START researchers and should not be interpreted as necessarily representing the official views or policies of the United States Government.
 
 GTD Team
+
+
+Cleaning
+The data has been cleaned by removing the empty cells aand dropping columns.The empty cells have been assigned NaN values and then dropped by the value.Columns have been dropped based on Redundancy.
